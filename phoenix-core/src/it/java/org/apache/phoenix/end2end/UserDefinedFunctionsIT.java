@@ -377,9 +377,13 @@ public class UserDefinedFunctionsIT extends BaseOwnClusterIT {
         }
         // without specifying the jar should pick the class from path of hbase.dynamic.jars.dir configuration. 
         stmt.execute("create function myreverse2(VARCHAR) returns VARCHAR as 'org.apache.phoenix.end2end."+MY_REVERSE_CLASS_NAME+"'");
-        rs = stmt.executeQuery("select myreverse2(firstname) from t");
+        rs = stmt.executeQuery("select myreverse2('abc') from t");
         assertTrue(rs.next());
-        assertEquals("oof", rs.getString(1));        
+        assertEquals("cba", rs.getString(1));
+        rs = stmt.executeQuery("select myreverse2('abc'), myreverse2('aba')");
+        assertTrue(rs.next());
+        assertEquals("cba", rs.getString(1));
+        assertEquals("aba", rs.getString(2));
         assertFalse(rs.next());
         rs = stmt.executeQuery("select * from t where myreverse2(firstname)='oof'");
         assertTrue(rs.next());

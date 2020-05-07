@@ -17,26 +17,44 @@
  */
 package org.apache.phoenix.expression.function;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.phoenix.expression.Expression;
-import org.joda.time.DateTime;
 
 /**
- * 
- * Rounds off the given {@link DateTime} to month.
+ *
+ * Rounds off the given {@link Date} to month.
  */
-public class RoundMonthExpression extends RoundJodaDateExpression {
-    
+public class RoundMonthExpression extends RoundJavaDateExpression {
+
     public RoundMonthExpression(){}
-    
+
     public RoundMonthExpression(List<Expression> children) {
        super(children);
     }
 
     @Override
-    public long roundDateTime(DateTime dateTime) {
-       return dateTime.monthOfYear().roundHalfEvenCopy().getMillis();
+    public long roundDateTime(Date dateTime) {
+        Date date = DateUtils.round(dateTime, Calendar.MONTH);
+
+        // TODO Should not be done any modification here
+
+        Calendar calendar = Calendar.getInstance();
+        TimeZone tz = calendar.getTimeZone();
+        ZoneId zid = tz == null ? ZoneId.systemDefault() : tz.toZoneId();
+
+        calendar.setTime(date);
+        LocalDateTime localDate = LocalDateTime.ofInstant(date.toInstant(), zid);
+        Date da = Date.from(localDate.toInstant(ZoneOffset.UTC));
+
+        return da.getTime();
     }
 
 }

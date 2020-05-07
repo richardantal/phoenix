@@ -17,16 +17,22 @@
  */
 package org.apache.phoenix.expression.function;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.phoenix.expression.Expression;
-import org.joda.time.DateTime;
 
 /**
  * 
- * Ceil function that rounds up the {@link DateTime} to next year. 
+ * Ceil function that rounds up the {@link Date} to next year.
  */
-public class CeilYearExpression extends RoundJodaDateExpression {
+public class CeilYearExpression extends RoundJavaDateExpression {
     
     public CeilYearExpression() {
         super();
@@ -37,8 +43,20 @@ public class CeilYearExpression extends RoundJodaDateExpression {
     }
 
     @Override
-    public long roundDateTime(DateTime dateTime) {
-       return dateTime.year().roundCeilingCopy().getMillis();
+    public long roundDateTime(Date dateTime) {
+        Date date = DateUtils.ceiling(dateTime, Calendar.YEAR);
+
+        // TODO Should not be done any modification here
+
+        Calendar calendar = Calendar.getInstance();
+        TimeZone tz = calendar.getTimeZone();
+        ZoneId zid = tz == null ? ZoneId.systemDefault() : tz.toZoneId();
+
+        calendar.setTime(date);
+        LocalDateTime localDate = LocalDateTime.ofInstant(date.toInstant(), zid);
+        Date da = Date.from(localDate.toInstant(ZoneOffset.UTC));
+
+        return da.getTime();
     }
 
 }
